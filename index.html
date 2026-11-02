@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Belly Log">
+<meta name="theme-color" content="#f4f1ea">
+<title>Belly Log</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #f4f1ea; color: #1f2933; }
+  body {
+    font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+    -webkit-text-size-adjust: 100%;
+  }
+  main { max-width: 480px; margin: 0 auto; padding: 12px 16px 40px; }
+  h1 { font-size: 26px; margin: 8px 0 2px; }
+  .sub { color: #66707a; margin: 0 0 14px; font-size: 15px; }
+  .card { background: #fff; border-radius: 18px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  h2 { font-size: 19px; margin: 0 0 10px; }
+  .sides { display: flex; justify-content: space-between; font-size: 13px; color: #66707a; margin: 0 52px 4px 0; }
+  .pic-row { display: flex; align-items: stretch; }
+  .pic { flex: 1; min-width: 0; }
+  .pic svg { display: block; width: 100%; height: auto; touch-action: none; -webkit-user-select: none; user-select: none; }
+  .vwrap { width: 52px; position: relative; }
+  .vwrap input { position: absolute; left: 50%; top: 50%; margin: 0;
+    -webkit-transform: translate(-50%, -50%) rotate(90deg); transform: translate(-50%, -50%) rotate(90deg); }
+  .hwrap { margin: 10px 52px 0 0; }
+  .where { margin: 10px 0 0; font-weight: 600; min-height: 24px; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 44px; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track { height: 12px; border-radius: 6px; background: #dde3e8; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 34px; height: 34px; margin-top: -11px;
+    border-radius: 50%; background: #fff; border: 3px solid #3b6ea5; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  #pain::-webkit-slider-runnable-track { background: linear-gradient(90deg, #4caf50, #f2c94c 50%, #e04848); }
+
+  .painrow { display: flex; align-items: center; gap: 14px; }
+  .painrow svg { width: 76px; height: 76px; flex: none; }
+  .painnum { font-size: 44px; font-weight: 700; line-height: 1; }
+  .painword { color: #66707a; font-size: 16px; }
+  .ends { display: flex; justify-content: space-between; font-size: 13px; color: #66707a; }
+
+  button { font: inherit; border: 0; border-radius: 14px; cursor: pointer; }
+  #save { width: 100%; padding: 16px; font-size: 20px; font-weight: 700; color: #fff; background: #3b6ea5; }
+  #save:disabled { background: #a9b6c3; }
+  #save.done { background: #2e8b57; }
+  .hint { text-align: center; color: #66707a; font-size: 14px; margin: 8px 0 0; min-height: 20px; }
+
+  .count { color: #66707a; font-size: 15px; margin: 0 0 8px; }
+  #map { max-width: 220px; margin: 0 auto 6px; }
+  #map svg { display: block; width: 100%; height: auto; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #eef0f2; }
+  .badge { flex: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; }
+  .entry { flex: 1; min-width: 0; }
+  .entry b { display: block; font-weight: 600; }
+  .entry span { color: #66707a; font-size: 14px; }
+  .del { background: none; color: #a0a8b0; font-size: 22px; padding: 4px 8px; }
+  #export { width: 100%; padding: 12px; margin-top: 12px; background: #e8eef5; color: #3b6ea5; font-weight: 600; }
+  .empty { color: #66707a; text-align: center; padding: 8px 0; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Belly Log</h1>
+  <p class="sub">When your belly hurts, show where and how much. Then tap Save.</p>
+
+  <section class="card">
+    <h2>1. Where does it hurt?</h2>
+    <div class="sides"><span>&larr; your right side</span><span>your left side &rarr;</span></div>
+    <div class="pic-row">
+      <div class="pic" id="pic"></div>
+      <div class="vwrap" id="vwrap">
+        <input type="range" id="posY" min="0" max="100" value="50" aria-label="Up or down: top is near the ribs, bottom is near the hips">
+      </div>
+    </div>
+    <div class="hwrap">
+      <input type="range" id="posX" min="0" max="100" value="50" aria-label="Right or left side of your belly">
+    </div>
+    <p class="where" id="where">Drag the dot, or use the two sliders.</p>
+  </section>
+
+  <section class="card">
+    <h2>2. How much does it hurt?</h2>
+    <div class="painrow">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <circle id="faceBg" cx="50" cy="50" r="46" fill="#f2c94c" stroke="#1f2933" stroke-width="3"/>
+        <circle cx="35" cy="40" r="5" fill="#1f2933"/>
+        <circle cx="65" cy="40" r="5" fill="#1f2933"/>
+        <path id="mouth" d="M30,66 Q50,66 70,66" fill="none" stroke="#1f2933" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <div>
+        <div class="painnum" id="painNum">?</div>
+        <div class="painword" id="painWord">Move the slider</div>
+      </div>
+    </div>
+    <input type="range" id="pain" min="0" max="10" step="1" value="5" aria-label="Pain from 0, no pain, to 10, worst pain ever">
+    <div class="ends"><span>0 no pain</span><span>10 worst ever</span></div>
+  </section>
+
+  <button id="save" disabled>Save</button>
+  <p class="hint" id="hint"></p>
+
+  <section class="card" style="margin-top:18px">
+    <h2>My log</h2>
+    <p class="count" id="count"></p>
+    <div id="map"></div>
+    <ul id="list"></ul>
+    <button id="export">Send log as a file (for the doctor)</button>
+  </section>
+</main>
+
+<script>
+var P = 'bl1_';
+var AREA = { x0: 50, x1: 250, y0: 40, y1: 320 };
+var WORDS = ['No pain', 'A tiny bit', 'A little', 'A little', 'Medium', 'Medium', 'Medium',
+  'Bad', 'Bad', 'Very bad', 'Worst ever'];
+/* Rows top to bottom, columns from his right to his left (the picture is him seen from the front). */
+var REGIONS = [
+  ['Top, right side', 'Top, middle', 'Top, left side'],
+  ['Middle, right side', 'Around the belly button', 'Middle, left side'],
+  ['Low, right side', 'Low, middle', 'Low, left side']
+];
+var MEDICAL = [
+  ['right hypochondrium (RUQ)', 'epigastric', 'left hypochondrium (LUQ)'],
+  ['right flank', 'periumbilical', 'left flank'],
+  ['right iliac fossa (RLQ)', 'suprapubic', 'left iliac fossa (LLQ)']
+];
+
+function load(key, fallback) {
+  try { var v = localStorage.getItem(P + key); return v ? JSON.parse(v) : fallback; }
+  catch (e) { return fallback; }
+}
+function store(key, val) {
+  try { localStorage.setItem(P + key, JSON.stringify(val)); return true; } catch (e) { return false; }
+}
+
+var entries = load('entries', []);
+if (!(entries instanceof Array)) entries = [];
+var touchedPos = false, touchedPain = false;
+
+function el(id) { return document.getElementById(id); }
+
+function painColour(i) { return 'hsl(' + Math.round(120 - 12 * i) + ', 65%, 48%)'; }
+function toPx(x) { return AREA.x0 + x / 100 * (AREA.x1 - AREA.x0); }
+function toPy(y) { return AREA.y0 + y / 100 * (AREA.y1 - AREA.y0); }
+function cell(v) { return v < 100 / 3 ? 0 : (v < 200 / 3 ? 1 : 2); }
+function regionOf(x, y) { return REGIONS[cell(y)][cell(x)]; }
+function medicalOf(x, y) { return MEDICAL[cell(y)][cell(x)]; }
+
+/* The belly drawing, used for both the input picture and the summary map. */
+function bodySvg(id, extra) {
+  return '<svg id="' + id + '" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M60,8 C40,60 45,120 55,170 C62,210 40,260 34,334 L266,334 C260,260 238,210 245,170 C255,120 260,60 240,8 Z" ' +
+      'fill="#fde7d4" stroke="#c99b7a" stroke-width="3"/>' +
+    '<path d="M62,105 Q150,10 238,105" fill="none" stroke="#c99b7a" stroke-width="2" stroke-dasharray="6 6"/>' +
+    '<path d="M70,295 Q115,312 150,334 M230,295 Q185,312 150,334" fill="none" stroke="#c99b7a" stroke-width="2"/>' +
+    '<circle cx="150" cy="180" r="6" fill="none" stroke="#b07f5f" stroke-width="2.5"/>' +
+    '<g stroke="#d9b89f" stroke-width="1" stroke-dasharray="3 5">' +
+      '<line x1="116.7" y1="40" x2="116.7" y2="320"/><line x1="183.3" y1="40" x2="183.3" y2="320"/>' +
+      '<line x1="50" y1="133.3" x2="250" y2="133.3"/><line x1="50" y1="226.7" x2="250" y2="226.7"/>' +
+    '</g>' +
+    '<text x="150" y="28" text-anchor="middle" font-size="13" fill="#b07f5f">ribs</text>' +
+    (extra || '') + '</svg>';
+}
+
+el('pic').innerHTML = bodySvg('body',
+  '<circle id="dot" cx="150" cy="180" r="15" fill="#3b6ea5" fill-opacity=".85" stroke="#fff" stroke-width="4"/>');
+
+var posX = el('posX'), posY = el('posY'), pain = el('pain');
+
+function sizeVertical() {
+  posY.style.width = el('pic').getBoundingClientRect().height + 'px';
+}
+
+function showPosition() {
+  var x = +posX.value, y = +posY.value, dot = el('dot');
+  dot.setAttribute('cx', toPx(x));
+  dot.setAttribute('cy', toPy(y));
+  el('where').textContent = touchedPos ? 'Here: ' + regionOf(x, y) : 'Drag the dot, or use the two sliders.';
+  updateSave();
+}
+
+function showPain() {
+  var i = +pain.value;
+  el('painNum').textContent = touchedPain ? i : '?';
+  el('painWord').textContent = touchedPain ? WORDS[i] : 'Move the slider';
+  el('faceBg').setAttribute('fill', touchedPain ? painColour(i) : '#e3e7eb');
+  var k = touchedPain ? 16 - 3.2 * i : 0;
+  el('mouth').setAttribute('d', 'M30,66 Q50,' + (66 + k) + ' 70,66');
+  if (touchedPos) el('dot').setAttribute('fill', touchedPain ? painColour(i) : '#3b6ea5');
+  updateSave();
+}
+
+function updateSave() {
+  var btn = el('save');
+  if (btn.className === 'done') return;
+  btn.disabled = !(touchedPos && touchedPain);
+  el('hint').textContent = btn.disabled
+    ? (!touchedPos ? 'Show where it hurts first.' : 'Now show how much it hurts.') : '';
+}
+
+posX.addEventListener('input', function () { touchedPos = true; showPosition(); showPain(); });
+posY.addEventListener('input', function () { touchedPos = true; showPosition(); showPain(); });
+pain.addEventListener('input', function () { touchedPain = true; showPain(); });
+
+/* Touching or dragging on the picture moves the dot and the sliders with it. */
+var dragging = false;
+function moveTo(ev) {
+  var svg = el('body'), r = svg.getBoundingClientRect();
+  var sx = (ev.clientX - r.left) / r.width * 300, sy = (ev.clientY - r.top) / r.height * 340;
+  var x = (sx - AREA.x0) / (AREA.x1 - AREA.x0) * 100, y = (sy - AREA.y0) / (AREA.y1 - AREA.y0) * 100;
+  posX.value = Math.max(0, Math.min(100, Math.round(x)));
+  posY.value = Math.max(0, Math.min(100, Math.round(y)));
+  touchedPos = true;
+  showPosition(); showPain();
+}
+el('body').addEventListener('pointerdown', function (ev) {
+  dragging = true; ev.preventDefault();
+  if (ev.target.setPointerCapture) { try { el('body').setPointerCapture(ev.pointerId); } catch (e) {} }
+  moveTo(ev);
+});
+el('body').addEventListener('pointermove', function (ev) { if (dragging) moveTo(ev); });
+el('body').addEventListener('pointerup', function () { dragging = false; });
+el('body').addEventListener('pointercancel', function () { dragging = false; });
+
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function dayText(d) {
+  var today = new Date(), y = new Date(); y.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return 'Today';
+  if (d.toDateString() === y.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+}
+function timeText(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+el('save').addEventListener('click', function () {
+  var now = new Date();
+  var x = +posX.value, y = +posY.value, i = +pain.value;
+  entries.push({ t: now.toISOString(), x: x, y: y, i: i });
+  if (!store('entries', entries)) {
+    entries.pop();
+    el('hint').textContent = 'Could not save on this phone. Tell a parent.';
+    return;
+  }
+  var btn = el('save');
+  btn.className = 'done'; btn.disabled = true;
+  btn.textContent = 'Saved ✓ ' + timeText(now);
+  el('hint').textContent = '';
+  touchedPos = false; touchedPain = false;
+  render();
+  setTimeout(function () {
+    btn.className = ''; btn.textContent = 'Save';
+    showPosition(); showPain();
+  }, 2500);
+});
+
+function render() {
+  var n = entries.length;
+  el('count').textContent = n === 0 ? '' : n + (n === 1 ? ' entry' : ' entries') + '. Each dot is one time it hurt.';
+  var dots = '';
+  for (var j = 0; j < n; j++) {
+    dots += '<circle cx="' + toPx(entries[j].x) + '" cy="' + toPy(entries[j].y) + '" r="11" fill="' +
+      painColour(entries[j].i) + '" fill-opacity=".6"/>';
+  }
+  el('map').innerHTML = n ? bodySvg('mapsvg', dots) : '';
+
+  var html = '';
+  for (var k = n - 1; k >= 0; k--) {
+    var e = entries[k], d = new Date(e.t);
+    html += '<li><div class="badge" style="background:' + painColour(e.i) + '">' + e.i + '</div>' +
+      '<div class="entry"><b>' + regionOf(e.x, e.y) + '</b><span>' + dayText(d) + ', ' + timeText(d) +
+      ' &middot; ' + WORDS[e.i] + '</span></div>' +
+      '<button class="del" data-k="' + k + '" aria-label="Delete this entry">&times;</button></li>';
+  }
+  el('list').innerHTML = html || '<li class="empty">Nothing saved yet.</li>';
+  el('export').style.display = n ? '' : 'none';
+}
+
+el('list').addEventListener('click', function (ev) {
+  var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
+  if (k === null || k === undefined) return;
+  var e = entries[+k], d = new Date(e.t);
+  if (!confirm('Delete the entry from ' + dayText(d) + ', ' + timeText(d) + '?')) return;
+  entries.splice(+k, 1);
+  store('entries', entries);
+  render();
+});
+
+function csv() {
+  var rows = ['date,time,pain_0_to_10,where_in_his_words,medical_region,x_0_his_right_to_100_his_left,y_0_ribs_to_100_hips'];
+  for (var j = 0; j < entries.length; j++) {
+    var e = entries[j], d = new Date(e.t);
+    rows.push([d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()), timeText(d), e.i,
+      '"' + regionOf(e.x, e.y) + '"', '"' + medicalOf(e.x, e.y) + '"', e.x, e.y].join(','));
+  }
+  return rows.join('\r\n') + '\r\n';
+}
+
+el('export').addEventListener('click', function () {
+  var d = new Date();
+  var name = 'belly-log-' + d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + '.csv';
+  var blob = new Blob([csv()], { type: 'text/csv' });
+  var file = null;
+  try { file = new File([blob], name, { type: 'text/csv' }); } catch (e) {}
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], title: 'Belly Log' })['catch'](function () {});
+    return;
+  }
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+});
+
+window.addEventListener('resize', sizeVertical);
+sizeVertical();
+showPosition(); showPain(); render();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js')['catch'](function () {}); });
+}
+</script>
+</body>
+</html>
