@@ -1,15 +1,17 @@
 # Belly Log: handover
 
-A home-screen web app for a 12-year-old to log belly pain: where it hurts, how much, and when. First draft built 2 November 2026. Not deployed, not in git, not tried on a real iPhone yet.
+A home-screen web app for a 12-year-old to log belly pain: where it hurts, how much, and when. First draft built and deployed 2 November 2026. Not tried on a real iPhone yet.
 
-If this goes into a public GitHub repo, the repo holds only the app. The pain entries live in the phone's own storage and never touch the repo or any server.
+This repo is public and holds only the app. The pain entries live in the phone's own storage and never touch the repo or any server.
 
 ## Where it stands
 
-- **Version:** 1, service worker `belly-log-v1`.
+- **Version:** 1, service worker `belly-log-v1`, deployed 2 November 2026 and confirmed live.
+- **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
+- **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
 - **Folder:** `~/Developer/belly-pain-log` (index.html, sw.js, manifest.json, icon-180.png, icon-512.png).
 - **Local test:** `python3 -m http.server 8765` in this folder, then http://localhost:8765. The "belly-log" entry in `~/.claude/launch.json` does the same for the Claude browser pane.
-- **Next step:** deploy to GitHub Pages (suggested repo `tasar1-ship-it/belly-pain-log`), add it to his home screen, and let him try it for a few days.
+- **Next step:** add it to his home screen (Safari, Share, Add to Home Screen) and let him try it for a few days.
 
 ## What it does
 
@@ -33,7 +35,8 @@ If this goes into a public GitHub repo, the repo holds only the app. The pain en
 ## Tested and not tested (2 November 2026, Claude browser pane at iPhone size 375 x 812)
 
 - Tested: dragging/tapping the drawing, all three sliders, the Save lock, saving, the log list and summary drawing, the CSV contents, delete, entries surviving a reload.
-- Not tested: a real iPhone (touch feel of the sideways up-down slider, the share sheet), the home-screen icon, offline use. The service worker did not register inside the browser pane, so offline caching is unverified.
+- Live site, same day: all five files load, the page renders, and the service worker is active with the `belly-log-v1` cache filled. (It does not register on the local http server in the browser pane; that is the pane, not the app.)
+- Not tested: a real iPhone (touch feel of the sideways up-down slider, the share sheet), the home-screen icon, actually opening the app with no signal.
 
 ## Known limits
 
