@@ -6,7 +6,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 ## Where it stands
 
-- **Version:** 2, service worker `belly-log-v2`, deployed 3 November 2026 (adds the two charts). Version 1 went live 2 November 2026.
+- **Version:** 3, service worker `belly-log-v3`, committed 3 November 2026 but NOT yet deployed (adds "Look at a log file"). Live is still version 2, deployed 3 November 2026 (adds the two charts). Version 1 went live 2 November 2026.
 - **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
 - **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
 - **Overview card:** Lukas › Other on the AI Projects dashboard, https://claude.ai/artifact/CMsziPsrVbyovn81KqmZNP (added 3 November 2026, version 61)
@@ -23,6 +23,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
    - **How much it hurt, over time:** pain 0-10 against time, one line through every entry, average below. Tapping a dot shows its day, time, pain and area.
    - **Where it hurts most:** the belly drawing split into the 3 x 3 areas, shaded by how often each area was logged (one red hue, five steps, scaled to the busiest area), with the count in each area and a "Most often" sentence with the average pain there.
    Then the list newest first, a delete button per entry (asks first), and "Send log as a file", which opens the iOS share sheet with a CSV.
+5. **Look at a log file** (version 3): for a parent who receives the CSV, e.g. by WhatsApp. Opens a file made by "Send log as a file" and shows it in place of My log, titled "Log file", with a yellow note naming the file, the filter set to All, the same two charts and the list. Nothing from the file is saved: no delete buttons, no send button, and "Back to my log" (or saving a new entry) returns to the phone's own log. A file without the app's header line shows "This does not look like a Belly Log file." On an iPhone the WhatsApp file must first be saved to Files (Share, Save to Files) so the file picker can find it.
 
 ## Data
 
@@ -40,7 +41,9 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 - Tested: dragging/tapping the drawing, all three sliders, the Save lock, saving, the log list and summary drawing, the CSV contents, delete, entries surviving a reload.
 - Live site, same day: all five files load, the page renders, and the service worker is active with the `belly-log-v1` cache filled. (It does not register on the local http server in the browser pane; that is the pane, not the app.)
-- Not tested: a real iPhone (touch feel of the sideways up-down slider, the share sheet), the home-screen icon, actually opening the app with no signal.
+- 3 November 2026, real use: his first entry (11:12, pain 4, low middle) arrived on WhatsApp as a CSV, so saving and sending the file work on his iPhone.
+- 3 November 2026, version 3 in the browser pane at 375 x 812 (file handed to the page by script, not through a real file picker): his real CSV, a four-entry file, a wrong file, Back to my log, saving while a file is shown, and the phone's own log left untouched. ES5 grep on the new lines: no hits.
+- Not tested: the "Look at a log file" picker on a real iPhone or Mac; a real iPhone (touch feel of the sideways up-down slider, the share sheet), the home-screen icon, actually opening the app with no signal.
 
 ## Known limits
 
