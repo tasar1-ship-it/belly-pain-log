@@ -6,7 +6,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 ## Where it stands
 
-- **Version:** 1, service worker `belly-log-v1`, deployed 2 November 2026 and confirmed live.
+- **Version:** 2, service worker `belly-log-v2`, deployed 3 November 2026 (adds the two charts). Version 1 went live 2 November 2026.
 - **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
 - **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
 - **Folder:** `~/Developer/belly-pain-log` (index.html, sw.js, manifest.json, icon-180.png, icon-512.png).
@@ -18,7 +18,10 @@ This repo is public and holds only the app. The pain entries live in the phone's
 1. **Where:** a front-view belly drawing. He drags the dot, or uses a left-right slider below the drawing and an up-down slider beside it. The drawing is him seen from the front, so the viewer's left is his right; the labels say "your right side" and "your left side".
 2. **How much:** a 0-10 slider with a face that changes from smiling green to frowning red, plus a word (No pain ... Worst ever).
 3. **Save:** stays grey until both the place and the amount have been set for this entry, so an untouched default is never saved. Records the date and time on the phone at the moment of saving.
-4. **My log:** a summary drawing with one dot per entry (coloured by pain), the list newest first, a delete button per entry (asks first), and "Send log as a file", which opens the iOS share sheet with a CSV.
+4. **My log:** a 7 days / 30 days / All filter (remembered in `bl1_range`) that drives two charts:
+   - **How much it hurt, over time:** pain 0-10 against time, one line through every entry, average below. Tapping a dot shows its day, time, pain and area.
+   - **Where it hurts most:** the belly drawing split into the 3 x 3 areas, shaded by how often each area was logged (one red hue, five steps, scaled to the busiest area), with the count in each area and a "Most often" sentence with the average pain there.
+   Then the list newest first, a delete button per entry (asks first), and "Send log as a file", which opens the iOS share sheet with a CSV.
 
 ## Data
 
@@ -42,3 +45,5 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 - The entries exist only on his phone. Deleting the home-screen icon or clearing Safari data deletes the log. Send the file regularly.
 - No note field (food, toilet, school day, sleep). Likely the most useful next addition for a doctor.
+- The curve joins entries directly, so a day with no entry looks the same as a gap between two entries. If he logs irregularly, a worst-pain-per-day chart with gaps for empty days would be more honest.
+- Charts tested 3 November 2026 in the browser pane at 375 x 812 with 22 made-up entries (local preview only): rendering, the three filter buttons, tapping a dot. Not yet seen on a real iPhone.

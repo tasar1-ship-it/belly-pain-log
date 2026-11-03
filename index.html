@@ -52,8 +52,18 @@
   .hint { text-align: center; color: #66707a; font-size: 14px; margin: 8px 0 0; min-height: 20px; }
 
   .count { color: #66707a; font-size: 15px; margin: 0 0 8px; }
-  #map { max-width: 220px; margin: 0 auto 6px; }
+  .range { display: flex; background: #eef1f4; border-radius: 12px; padding: 3px; margin: 0 0 14px; }
+  .range button { flex: 1; padding: 8px 0; background: none; color: #3e4a56; font-size: 15px; border-radius: 10px; }
+  .range button.on { background: #fff; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  h3 { font-size: 16px; margin: 4px 0 6px; }
+  #curve svg { display: block; width: 100%; height: auto; }
+  .readout { font-size: 14px; color: #3e4a56; min-height: 20px; margin: 4px 0 14px; }
+  #map { max-width: 240px; margin: 0 auto 6px; }
   #map svg { display: block; width: 100%; height: auto; }
+  .most { font-size: 15px; margin: 4px 0 6px; }
+  .scale { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; color: #66707a; margin-bottom: 8px; }
+  .scale i { display: inline-block; width: 18px; height: 12px; border-radius: 3px; }
+  .nodata { color: #66707a; font-size: 14px; text-align: center; padding: 12px 0; }
   ul { list-style: none; margin: 0; padding: 0; }
   li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #eef0f2; }
   .badge { flex: none; width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700;
@@ -110,7 +120,18 @@
   <section class="card" style="margin-top:18px">
     <h2>My log</h2>
     <p class="count" id="count"></p>
-    <div id="map"></div>
+    <div id="charts">
+      <div class="range" id="range">
+        <button data-r="7">7 days</button><button data-r="30">30 days</button><button data-r="0">All</button>
+      </div>
+      <h3>How much it hurt, over time</h3>
+      <div id="curve"></div>
+      <p class="readout" id="readout"></p>
+      <h3>Where it hurts most</h3>
+      <div id="map"></div>
+      <div class="scale" id="scale"></div>
+      <p class="most" id="most"></p>
+    </div>
     <ul id="list"></ul>
     <button id="export">Send log as a file (for the doctor)</button>
   </section>
@@ -154,11 +175,15 @@ function cell(v) { return v < 100 / 3 ? 0 : (v < 200 / 3 ? 1 : 2); }
 function regionOf(x, y) { return REGIONS[cell(y)][cell(x)]; }
 function medicalOf(x, y) { return MEDICAL[cell(y)][cell(x)]; }
 
-/* The belly drawing, used for both the input picture and the summary map. */
-function bodySvg(id, extra) {
+/* The belly drawing, used for both the input picture and the summary map.
+   "under" sits on the skin inside the outline; "over" sits on top of everything. */
+var TORSO = 'M60,8 C40,60 45,120 55,170 C62,210 40,260 34,334 L266,334 C260,260 238,210 245,170 C255,120 260,60 240,8 Z';
+function bodySvg(id, under, over) {
   return '<svg id="' + id + '" viewBox="0 0 300 340" xmlns="http://www.w3.org/2000/svg">' +
-    '<path d="M60,8 C40,60 45,120 55,170 C62,210 40,260 34,334 L266,334 C260,260 238,210 245,170 C255,120 260,60 240,8 Z" ' +
-      'fill="#fde7d4" stroke="#c99b7a" stroke-width="3"/>' +
+    '<clipPath id="' + id + '-clip"><path d="' + TORSO + '"/></clipPath>' +
+    '<path d="' + TORSO + '" fill="#fde7d4"/>' +
+    '<g clip-path="url(#' + id + '-clip)">' + (under || '') + '</g>' +
+    '<path d="' + TORSO + '" fill="none" stroke="#c99b7a" stroke-width="3"/>' +
     '<path d="M62,105 Q150,10 238,105" fill="none" stroke="#c99b7a" stroke-width="2" stroke-dasharray="6 6"/>' +
     '<path d="M70,295 Q115,312 150,334 M230,295 Q185,312 150,334" fill="none" stroke="#c99b7a" stroke-width="2"/>' +
     '<circle cx="150" cy="180" r="6" fill="none" stroke="#b07f5f" stroke-width="2.5"/>' +
@@ -167,10 +192,10 @@ function bodySvg(id, extra) {
       '<line x1="50" y1="133.3" x2="250" y2="133.3"/><line x1="50" y1="226.7" x2="250" y2="226.7"/>' +
     '</g>' +
     '<text x="150" y="28" text-anchor="middle" font-size="13" fill="#b07f5f">ribs</text>' +
-    (extra || '') + '</svg>';
+    (over || '') + '</svg>';
 }
 
-el('pic').innerHTML = bodySvg('body',
+el('pic').innerHTML = bodySvg('body', '',
   '<circle id="dot" cx="150" cy="180" r="15" fill="#3b6ea5" fill-opacity=".85" stroke="#fff" stroke-width="4"/>');
 
 var posX = el('posX'), posY = el('posY'), pain = el('pain');
@@ -262,13 +287,9 @@ el('save').addEventListener('click', function () {
 
 function render() {
   var n = entries.length;
-  el('count').textContent = n === 0 ? '' : n + (n === 1 ? ' entry' : ' entries') + '. Each dot is one time it hurt.';
-  var dots = '';
-  for (var j = 0; j < n; j++) {
-    dots += '<circle cx="' + toPx(entries[j].x) + '" cy="' + toPy(entries[j].y) + '" r="11" fill="' +
-      painColour(entries[j].i) + '" fill-opacity=".6"/>';
-  }
-  el('map').innerHTML = n ? bodySvg('mapsvg', dots) : '';
+  el('count').textContent = n === 0 ? '' : n + (n === 1 ? ' entry' : ' entries') + ' saved so far.';
+  el('charts').style.display = n ? '' : 'none';
+  if (n) renderCharts();
 
   var html = '';
   for (var k = n - 1; k >= 0; k--) {
@@ -281,6 +302,113 @@ function render() {
   el('list').innerHTML = html || '<li class="empty">Nothing saved yet.</li>';
   el('export').style.display = n ? '' : 'none';
 }
+
+/* Charts: a time filter (days back, 0 = all) drives both the curve and the map. */
+var DAY = 864e5;
+var HEAT = ['#f7c4ba', '#f09a8a', '#e46e5b', '#c84834', '#9c2c1b'];
+var range = load('range', 30), picked = null, shown = [];
+
+function inRange() {
+  var start = range ? Date.now() - range * DAY : 0, out = [];
+  for (var j = 0; j < entries.length; j++) {
+    if (new Date(entries[j].t).getTime() >= start) out.push(entries[j]);
+  }
+  return out;
+}
+
+function renderCharts() {
+  var btns = el('range').getElementsByTagName('button');
+  for (var b = 0; b < btns.length; b++) btns[b].className = +btns[b].getAttribute('data-r') === range ? 'on' : '';
+  shown = inRange();
+  renderCurve(shown);
+  renderMap(shown);
+}
+
+function renderCurve(list) {
+  if (!list.length) {
+    el('curve').innerHTML = '<p class="nodata">Nothing saved in this time.</p>';
+    el('readout').textContent = '';
+    return;
+  }
+  var L = 30, R = 328, T = 12, B = 158, t1 = Date.now();
+  var t0 = range ? t1 - range * DAY : new Date(list[0].t).getTime();
+  if (t1 - t0 < DAY) t0 = t1 - DAY;
+  function sx(t) { return (L + (t - t0) / (t1 - t0) * (R - L)).toFixed(1); }
+  function sy(i) { return (B - i / 10 * (B - T)).toFixed(1); }
+  var s = '<svg viewBox="0 0 340 186" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Pain from 0 to 10 over time">';
+  for (var g = 0; g <= 10; g += 5) {
+    s += '<line x1="' + L + '" x2="' + R + '" y1="' + sy(g) + '" y2="' + sy(g) + '" stroke="#e3e7eb" stroke-width="1"/>' +
+      '<text x="' + (L - 8) + '" y="' + (+sy(g) + 4) + '" text-anchor="end" font-size="12" fill="#66707a">' + g + '</text>';
+  }
+  var short = t1 - t0 <= 2 * DAY;
+  for (var k = 0; k <= 3; k++) {
+    var tk = new Date(t0 + k * (t1 - t0) / 3), x = sx(tk.getTime());
+    var label = short ? timeText(tk) : tk.getDate() + ' ' + tk.toLocaleDateString(undefined, { month: 'short' });
+    s += '<line x1="' + x + '" x2="' + x + '" y1="' + B + '" y2="' + (B + 4) + '" stroke="#c4cbd2"/>' +
+      '<text x="' + x + '" y="' + (B + 20) + '" text-anchor="' + (k === 0 ? 'start' : (k === 3 ? 'end' : 'middle')) +
+      '" font-size="12" fill="#66707a">' + label + '</text>';
+  }
+  var path = '', marks = '', hits = '', sum = 0;
+  for (var j = 0; j < list.length; j++) {
+    var px = sx(new Date(list[j].t).getTime()), py = sy(list[j].i), on = list[j].t === picked;
+    sum += list[j].i;
+    path += (j ? ' L' : 'M') + px + ',' + py;
+    marks += '<circle cx="' + px + '" cy="' + py + '" r="' + (on ? 7 : 4.5) + '" fill="#3b6ea5" stroke="#fff" stroke-width="2"/>';
+    hits += '<circle cx="' + px + '" cy="' + py + '" r="14" fill="transparent" data-t="' + list[j].t + '"/>';
+  }
+  s += '<path d="' + path + '" fill="none" stroke="#3b6ea5" stroke-width="2" stroke-linejoin="round"/>' + marks + hits + '</svg>';
+  el('curve').innerHTML = s;
+
+  var avg = 'Average pain ' + (Math.round(sum / list.length * 10) / 10) + ' (' + list.length +
+    (list.length === 1 ? ' entry' : ' entries') + ').';
+  var e = null;
+  for (var m = 0; m < list.length; m++) if (list[m].t === picked) e = list[m];
+  if (e) {
+    var d = new Date(e.t);
+    el('readout').textContent = dayText(d) + ', ' + timeText(d) + ': pain ' + e.i + ', ' + regionOf(e.x, e.y).toLowerCase() + '.';
+  } else {
+    el('readout').textContent = avg + ' Tap a dot to see it.';
+  }
+}
+
+function renderMap(list) {
+  if (!list.length) { el('map').innerHTML = ''; el('scale').innerHTML = ''; el('most').textContent = ''; return; }
+  var counts = [0, 0, 0, 0, 0, 0, 0, 0, 0], sums = [0, 0, 0, 0, 0, 0, 0, 0, 0], max = 0, top = 0;
+  for (var j = 0; j < list.length; j++) {
+    var c = cell(list[j].y) * 3 + cell(list[j].x);
+    counts[c]++; sums[c] += list[j].i;
+  }
+  for (c = 0; c < 9; c++) if (counts[c] > max) { max = counts[c]; top = c; }
+  var under = '', over = '', w = (AREA.x1 - AREA.x0) / 3, h = (AREA.y1 - AREA.y0) / 3;
+  for (c = 0; c < 9; c++) {
+    if (!counts[c]) continue;
+    var row = Math.floor(c / 3), col = c % 3, step = Math.ceil(counts[c] / max * 5) - 1;
+    /* Edge cells stretch to the outline so the colour fills the whole belly area. */
+    var x0 = col === 0 ? 0 : AREA.x0 + col * w, x1 = col === 2 ? 300 : AREA.x0 + (col + 1) * w;
+    var y0 = row === 0 ? 0 : AREA.y0 + row * h, y1 = row === 2 ? 340 : AREA.y0 + (row + 1) * h;
+    under += '<rect x="' + x0 + '" y="' + y0 + '" width="' + (x1 - x0) + '" height="' + (y1 - y0) + '" fill="' + HEAT[step] + '"/>';
+    over += '<text x="' + (AREA.x0 + (col + 0.5) * w) + '" y="' + (AREA.y0 + (row + 0.5) * h + 9) +
+      '" text-anchor="middle" font-size="26" font-weight="700" fill="' + (step >= 3 ? '#fff' : '#1f2933') + '">' + counts[c] + '</text>';
+  }
+  el('map').innerHTML = bodySvg('mapsvg', under, over);
+  var sw = '';
+  for (var k = 0; k < HEAT.length; k++) sw += '<i style="background:' + HEAT[k] + '"></i>';
+  el('scale').innerHTML = '<span>fewer</span>' + sw + '<span>more</span>';
+  var r = Math.floor(top / 3), q = top % 3;
+  el('most').innerHTML = 'Most often: <b>' + REGIONS[r][q].toLowerCase() + '</b>, ' + max + ' of ' + list.length +
+    ' times, average pain ' + (Math.round(sums[top] / max * 10) / 10) + '.';
+}
+
+el('range').addEventListener('click', function (ev) {
+  var r = ev.target.getAttribute && ev.target.getAttribute('data-r');
+  if (r === null || r === undefined) return;
+  range = +r; store('range', range); renderCharts();
+});
+el('curve').addEventListener('click', function (ev) {
+  var t = ev.target.getAttribute && ev.target.getAttribute('data-t');
+  picked = t && t !== picked ? t : null;
+  renderCurve(shown);
+});
 
 el('list').addEventListener('click', function (ev) {
   var k = ev.target.getAttribute && ev.target.getAttribute('data-k');
