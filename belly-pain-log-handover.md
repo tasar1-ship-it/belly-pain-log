@@ -9,6 +9,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 - **Version:** 2, service worker `belly-log-v2`, deployed 3 November 2026 (adds the two charts). Version 1 went live 2 November 2026.
 - **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
 - **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
+- **Overview card:** Lukas › Other on the AI Projects dashboard, https://claude.ai/artifact/CMsziPsrVbyovn81KqmZNP (added 3 November 2026, version 61)
 - **Folder:** `~/Developer/belly-pain-log` (index.html, sw.js, manifest.json, icon-180.png, icon-512.png).
 - **Local test:** `python3 -m http.server 8765` in this folder, then http://localhost:8765. The "belly-log" entry in `~/.claude/launch.json` does the same for the Claude browser pane.
 - **Next step:** add it to his home screen (Safari, Share, Add to Home Screen) and let him try it for a few days.
