@@ -231,7 +231,7 @@ function showPain() {
   var i = STEPS[+pain.value];
   el('painNum').textContent = touchedPain ? i : '?';
   el('painWord').textContent = touchedPain ? wordFor(i) : 'Move the slider';
-  pain.setAttribute('aria-valuetext', i + ', ' + wordFor(i));
+  pain.setAttribute('aria-valuetext', touchedPain ? i + ', ' + wordFor(i) : 'Not set yet');
   el('faceBg').setAttribute('fill', touchedPain ? painColour(i) : '#e3e7eb');
   var k = touchedPain ? 16 - 3.2 * i : 0;
   el('mouth').setAttribute('d', 'M30,66 Q50,' + (66 + k) + ' 70,66');
