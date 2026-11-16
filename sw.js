@@ -1,4 +1,4 @@
-var CACHE = 'belly-log-v3';
+var CACHE = 'belly-log-v4';
 var SHELL = ['./', 'index.html', 'manifest.json', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', function (e) {

@@ -114,7 +114,7 @@
         <div class="painword" id="painWord">Move the slider</div>
       </div>
     </div>
-    <input type="range" id="pain" min="0" max="10" step="1" value="5" aria-label="Pain from 0, no pain, to 10, worst pain ever">
+    <input type="range" id="pain" min="0" max="13" step="1" value="5" aria-label="Pain from 0, no pain, to 10, worst pain ever">
     <div class="ends"><span>0 no pain</span><span>10 worst ever</span></div>
   </section>
 
@@ -153,6 +153,10 @@ var P = 'bl1_';
 var AREA = { x0: 50, x1: 250, y0: 40, y1: 320 };
 var WORDS = ['No pain', 'A tiny bit', 'A little', 'A little', 'Medium', 'Medium', 'Medium',
   'Bad', 'Bad', 'Very bad', 'Worst ever'];
+/* The pain slider moves through these steps; the half steps sit where most of his pain is. */
+var STEPS = [0, 1, 2, 3, 4, 5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 10];
+var HALF_WORDS = { '6.5': 'Medium to bad', '7.5': 'Bad', '8.5': 'Bad to very bad' };
+function wordFor(i) { return HALF_WORDS[String(i)] || WORDS[i]; }
 /* Rows top to bottom, columns from his right to his left (the picture is him seen from the front). */
 var REGIONS = [
   ['Top, right side', 'Top, middle', 'Top, left side'],
@@ -224,9 +228,10 @@ function showPosition() {
 }
 
 function showPain() {
-  var i = +pain.value;
+  var i = STEPS[+pain.value];
   el('painNum').textContent = touchedPain ? i : '?';
-  el('painWord').textContent = touchedPain ? WORDS[i] : 'Move the slider';
+  el('painWord').textContent = touchedPain ? wordFor(i) : 'Move the slider';
+  pain.setAttribute('aria-valuetext', i + ', ' + wordFor(i));
   el('faceBg').setAttribute('fill', touchedPain ? painColour(i) : '#e3e7eb');
   var k = touchedPain ? 16 - 3.2 * i : 0;
   el('mouth').setAttribute('d', 'M30,66 Q50,' + (66 + k) + ' 70,66');
@@ -278,7 +283,7 @@ function timeText(d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
 el('save').addEventListener('click', function () {
   if (viewing) { viewing = null; range = load('range', 30); picked = null; }
   var now = new Date();
-  var x = +posX.value, y = +posY.value, i = +pain.value;
+  var x = +posX.value, y = +posY.value, i = STEPS[+pain.value];
   entries.push({ t: now.toISOString(), x: x, y: y, i: i });
   if (!store('entries', entries)) {
     entries.pop();
@@ -316,7 +321,7 @@ function render() {
     var e = list[k], d = new Date(e.t);
     html += '<li><div class="badge" style="background:' + painColour(e.i) + '">' + e.i + '</div>' +
       '<div class="entry"><b>' + regionOf(e.x, e.y) + '</b><span>' + dayText(d) + ', ' + timeText(d) +
-      ' &middot; ' + WORDS[e.i] + '</span></div>' +
+      ' &middot; ' + wordFor(e.i) + '</span></div>' +
       (viewing ? '' : '<button class="del" data-k="' + k + '" aria-label="Delete this entry">&times;</button>') + '</li>';
   }
   el('list').innerHTML = html || '<li class="empty">Nothing saved yet.</li>';
@@ -477,7 +482,7 @@ function parseLog(text) {
     var dt = f[0].split('-'), tm = f[1].split(':');
     var i = +f[2], x = +f[f.length - 2], y = +f[f.length - 1];
     var d = new Date(+dt[0], +dt[1] - 1, +dt[2], +tm[0], +tm[1]);
-    if (isNaN(d.getTime()) || isNaN(i) || isNaN(x) || isNaN(y) || i < 0 || i > 10 || i !== Math.round(i) ||
+    if (isNaN(d.getTime()) || isNaN(i) || isNaN(x) || isNaN(y) || STEPS.indexOf(i) < 0 ||
       x < 0 || x > 100 || y < 0 || y > 100) continue;
     out.push({ t: d.toISOString(), x: x, y: y, i: i });
   }
