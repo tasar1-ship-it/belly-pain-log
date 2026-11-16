@@ -6,7 +6,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 ## Where it stands
 
-- **Version:** 4, service worker `belly-log-v4`, in the code since 16 November 2026 and not deployed yet: half steps 6.5, 7.5 and 8.5 on the pain slider, and the service worker no longer shows or stores an error page from the server. Live until it is pushed: version 3, service worker `belly-log-v3`, deployed 3 November 2026 (adds "Look at a log file"). Version 2, deployed the same day, added the two charts. Version 1 went live 2 November 2026.
+- **Version:** 4, service worker `belly-log-v4`, deployed 16 November 2026: half steps 6.5, 7.5 and 8.5 on the pain slider, and the service worker no longer shows or stores an error page from the server. Version 3, service worker `belly-log-v3`, deployed 3 November 2026, added "Look at a log file". Version 2, deployed the same day, added the two charts. Version 1 went live 2 November 2026.
 - **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
 - **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
 - **Overview card:** the family section, Other, on the AI Projects dashboard, https://claude.ai/artifact/CMsziPsrVbyovn81KqmZNP (added 3 November 2026, version 61)
