@@ -1,12 +1,12 @@
 # Belly Log: handover
 
-A home-screen web app for a 12-year-old to log belly pain: where it hurts, how much, and when. First draft built and deployed 2 November 2026. Not tried on a real iPhone yet.
+A home-screen web app for a child to log belly pain: where it hurts, how much, and when. First draft built and deployed 2 November 2026. Not tried on a real iPhone yet.
 
 This repo is public and holds only the app. The pain entries live in the phone's own storage and never touch the repo or any server.
 
 ## Where it stands
 
-- **Version:** 3, service worker `belly-log-v3`, deployed 3 November 2026 (adds "Look at a log file"). Version 2, deployed the same day, added the two charts. Version 1 went live 2 November 2026.
+- **Version:** 4, service worker `belly-log-v4`, in the code since 16 November 2026 and not deployed yet: half steps 6.5, 7.5 and 8.5 on the pain slider, and the service worker no longer shows or stores an error page from the server. Live until it is pushed: version 3, service worker `belly-log-v3`, deployed 3 November 2026 (adds "Look at a log file"). Version 2, deployed the same day, added the two charts. Version 1 went live 2 November 2026.
 - **Live app:** https://tasar1-ship-it.github.io/belly-pain-log/
 - **Code:** https://github.com/tasar1-ship-it/belly-pain-log (branch `main`, GitHub Pages from the root)
 - **Overview card:** the family section, Other, on the AI Projects dashboard, https://claude.ai/artifact/CMsziPsrVbyovn81KqmZNP (added 3 November 2026, version 61)
@@ -17,7 +17,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 ## What it does
 
 1. **Where:** a front-view belly drawing. He drags the dot, or uses a left-right slider below the drawing and an up-down slider beside it. The drawing is him seen from the front, so the viewer's left is his right; the labels say "your right side" and "your left side".
-2. **How much:** a 0-10 slider with a face that changes from smiling green to frowning red, plus a word (No pain ... Worst ever).
+2. **How much:** a 0-10 slider with a face that changes from smiling green to frowning red, plus a word (No pain ... Worst ever). Since version 4 it moves through 14 fixed steps: 0 to 6 in whole steps, then 6.5, 7, 7.5, 8, 8.5, 9, 10. The middle of the track is therefore 6.5, not 5 as in versions 1 to 3.
 3. **Save:** stays grey until both the place and the amount have been set for this entry, so an untouched default is never saved. Records the date and time on the phone at the moment of saving.
 4. **My log:** a 7 days / 30 days / All filter (remembered in `bl1_range`) that drives two charts:
    - **How much it hurt, over time:** pain 0-10 against time, one line through every entry, average below. Tapping a dot shows its day, time, pain and area.
@@ -27,7 +27,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 ## Data
 
-- localStorage key `bl1_entries`: an array of `{ t: ISO time (UTC), x: 0-100 his right to his left, y: 0-100 ribs to hips, i: 0-10 }`.
+- localStorage key `bl1_entries`: an array of `{ t: ISO time (UTC), x: 0-100 his right to his left, y: 0-100 ribs to hips, i: 0-10 }`. Up to version 3 `i` is a whole number; since version 4 it can also be 6.5, 7.5 or 8.5. Version 3 code cannot read those, so do not go back to it once a half step has been saved.
 - The area name is worked out from x/y on a 3 x 3 grid, both in plain words and as the medical region name (RUQ, epigastric, periumbilical and so on), which goes into the CSV for the doctor.
 - CSV columns: date, time (local), pain_0_to_10, where_in_his_words, medical_region, x, y.
 
@@ -41,7 +41,7 @@ This repo is public and holds only the app. The pain entries live in the phone's
 
 - Tested: dragging/tapping the drawing, all three sliders, the Save lock, saving, the log list and summary drawing, the CSV contents, delete, entries surviving a reload.
 - Live site, same day: all five files load, the page renders, and the service worker is active with the `belly-log-v1` cache filled. (It does not register on the local http server in the browser pane; that is the pane, not the app.)
-- 3 November 2026, real use: his first entry (11:12, pain 4, low middle) arrived on WhatsApp as a CSV, so saving and sending the file work on his iPhone.
+- 3 November 2026, real use: his first entry arrived on WhatsApp as a CSV, so saving and sending the file work on his iPhone.
 - 3 November 2026, version 3 in the browser pane at 375 x 812 (file handed to the page by script, not through a real file picker): his real CSV, a four-entry file, a wrong file, Back to my log, saving while a file is shown, and the phone's own log left untouched. ES5 grep on the new lines: no hits.
 - Not tested: the "Look at a log file" picker on a real iPhone or Mac; a real iPhone (touch feel of the sideways up-down slider, the share sheet), the home-screen icon, actually opening the app with no signal.
 
